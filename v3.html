@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Analytics Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            background-color: #4a90e2;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-top: 0;
+            border-radius: 8px 8px 0 0;
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3a7bc8;
+        }
+        #imagePreview, #ocrOutput {
+            border: 1px dashed #ccc;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OCR Analytics Page</h1>
+        
+        <div class="step">
+            <div class="step-title">Step 1</div>
+            <button onclick="document.getElementById('imageUpload').click()">Select Image</button>
+            <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="previewImage(event)">
+            <div id="imagePreview">Image preview will appear here</div>
+        </div>
+        
+        <div class="step">
+            <div class="step-title">Step 2</div>
+            <button onclick="analyzeImage()">OCR Analyze</button>
+        </div>
+        
+        <div class="step">
+            <div class="step-title">Step 3</div>
+            <div id="ocrOutput">OCR Categories Output will appear here</div>
+        </div>
+    </div>
+    <script>
+        let selectedImage;
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            selectedImage = file;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.innerHTML = `<img src="${e.target.result}" alt="Image Preview" style="max-width: 100%; max-height: 100%;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function analyzeImage() {
+            if (!selectedImage) {
+                alert('Please select an image first.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = async function() {
+                const imageData = reader.result;
+                const subscriptionKey = '11dc070042ae4a4284a0467d3b628af1';
+                const endpoint = 'https://sampleramu.cognitiveservices.azure.com/';
+
+                try {
+                    console.log('Sending image data to Azure Computer Vision API...');
+                    const response = await fetch(`${endpoint}/vision/v3.2/ocr`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream',
+                            'Ocp-Apim-Subscription-Key': subscriptionKey
+                        },
+                        body: imageData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('OCR Result:', result); // Log the result for debugging
+                    displayResults(result);
+                } catch (error) {
+                    console.error('Error during OCR analysis:', error);
+                }
+            };
+            reader.readAsArrayBuffer(selectedImage);
+        }
+
+        function displayResults(result) {
+            const ocrOutput = document.getElementById('ocrOutput');
+            ocrOutput.innerHTML = '';
+
+            if (result.regions && result.regions.length > 0) {
+                result.regions.forEach(region => {
+                    region.lines.forEach(line => {
+                        const lineText = line.words.map(word => word.text).join(' ');
+                        const p = document.createElement('p');
+                        p.textContent = lineText;
+                        ocrOutput.appendChild(p);
+                    });
+                });
+            } else {
+                ocrOutput.textContent = 'No text detected.';
+            }
+        }
+    </script>
+</body>
+</html>
