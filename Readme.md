@@ -2,8 +2,8 @@
 
 Below are the screenshots of the project:
 
-![Image 1](Screenshot.png)
+![Image 1](Screenshot.jpg)
 
-Below are the image used of the project:
+Below are the images used in the project:
 
-![Image 2](product-manager-business-card.png)
+![Image 2](product-manager-business-card.jpg)
